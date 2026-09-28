@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+  <id>workspace_invites</id>
+  <name>Workspace invitation links</name>
+  <summary>Administrator-managed password-setup links without email</summary>
+  <description>Adds a password-setup link action to the Users screen. Uses Nextcloud's native reset tokens and administrator password confirmation.</description>
+  <version>1.0.0</version>
+  <licence>agpl</licence>
+  <author>Weezboo</author>
+  <namespace>WorkspaceInvites</namespace>
+  <category>tools</category>
+  <dependencies><nextcloud min-version="34" max-version="34"/></dependencies>
+</info>

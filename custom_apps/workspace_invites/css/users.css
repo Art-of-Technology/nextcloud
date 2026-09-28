@@ -1,0 +1,24 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+.workspace-invites-dialog {
+  box-sizing: border-box;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  margin: auto;
+  padding: 24px;
+  overflow: auto;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: var(--border-radius-large, 12px);
+  color: var(--color-main-text, #222);
+  background: var(--color-main-background, #fff);
+  box-shadow: 0 8px 40px #0004;
+}
+.workspace-invites-dialog::backdrop { background: #0008; }
+.workspace-invites-dialog h2 { margin: 0 0 16px; font-size: 1.3rem; }
+.workspace-invites-dialog p { margin: 12px 0; overflow-wrap: anywhere; }
+.workspace-invites-dialog [hidden] { display: none !important; }
+.workspace-invites-result label { display: block; margin-bottom: 8px; }
+.workspace-invites-result input { box-sizing: border-box; width: 100%; }
+.workspace-invites-status { min-height: 24px; }
+.workspace-invites-buttons { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.workspace-invites-buttons button { min-height: 44px; }
+.workspace-invites-dialog :focus-visible { outline: 2px solid var(--color-primary-element, #00679e); outline-offset: 3px; }
