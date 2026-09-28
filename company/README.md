@@ -8,6 +8,7 @@ The `company/34` branch starts at upstream `v34.0.4`, matching the application v
 Company functionality lives under `custom_apps/`. No upstream core files are changed by the initial company commit. Preserve this boundary when adding features; use Nextcloud app APIs and events rather than patching core.
 
 - `custom_apps/workspace_invites`: administrator-only Copy password-setup link action. Uses native reset tokens, CSRF checks, recent password confirmation and rate limiting. It does not send invitation email. See the app README for restrictions and verification.
+- `custom_apps/workspace_onboarding`: visible browser notification permission onboarding for signed-in users. Requests browser permission only after an explicit click, respects granted/denied states, and supports a seven-day dismissal.
 
 To deploy this app into an existing Nextcloud installation, copy only `custom_apps/workspace_invites` to a configured custom-app directory, apply the web-server user's ownership, then run `php occ app:enable workspace_invites` as that user. Do not replace a production installation with this source checkout: Nextcloud's source repository requires its own build/dependency steps.
 
