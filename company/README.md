@@ -21,6 +21,12 @@ The initial extension was tested against Nextcloud34.0.4 with disposable account
 
 ## Production Talk work
 
+### Notification sound defaults
+
+Both Notifications app defaults (`sound_notification` and `sound_talk`) are enabled on our instance. Existing accounts were updated once on2026-09-28. These are supported application preferences, not core patches. New accounts inherit the defaults; users can later opt out.
+
+`company/notification-sounds.php` inspects effective preferences by default. To initialize a new deployment or explicitly migrate existing accounts, run it as the web-server user using PHP CLI with `--apply`. Set `NEXTCLOUD_ROOT` if the installation is not `/var/www/html`. Back up the current preferences before applying; rerunning with `--apply` intentionally overrides existing users' sound choices. Do not schedule it as a recurring enforcement job. Reload existing browser tabs to load the changed settings. Each browser still needs notification permission; the server cannot grant that permission.
+
 Real-time delivery is deployment infrastructure, separate from our extension code. Track HPB/WebSocket signaling, Client Push, TURN/media connectivity, notification acceptance, backups and security in repository issues. A desktop client alone does not configure the server backend.
 
 Secrets belong in deployment secret storage. Never commit database credentials, reset links, API keys, SSH keys or webhook secrets. The GitHub Push webhook is managed in repository settings, outside the source tree.
