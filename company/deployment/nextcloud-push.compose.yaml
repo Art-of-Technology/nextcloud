@@ -1,0 +1,34 @@
+# Live companion service. .env holds DATABASE_URL, DATABASE_PREFIX, REDIS_URL,
+# NEXTCLOUD_URL=http://nextcloud-push-app and PORT=7867; do not commit .env.
+name: nextcloud-client-push
+services:
+  push:
+    image: nextcloud:34.0.4-apache@sha256:20298c35b8fed1d9cbbc55dad09976424696856f06f1984fba951d8184b7bfce
+    container_name: nextcloud-push
+    user: '33:33'
+    entrypoint: [/notify_push]
+    env_file: [.env]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    volumes:
+      - /srv/nextcloud/app/custom_apps/notify_push/bin/x86_64/notify_push:/notify_push:ro
+    networks:
+      backend: {}
+      dokploy-network: {}
+      push-internal:
+        ipv4_address: 172.30.27.2
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+networks:
+  backend:
+    external: true
+    name: compose-reboot-redundant-system-pfhjst_backend
+  dokploy-network:
+    external: true
+  push-internal:
+    external: true
+    name: nextcloud-push-internal
