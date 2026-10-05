@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+ <id>workspace_bot_mentions</id><name>Workspace bot mentions</name>
+ <summary>Suggest available conversation bots in Talk mentions</summary>
+ <description>Adds visibly labelled bot invocation aliases to the JSON mention picker for authenticated conversation members.</description>
+ <version>1.0.0</version><licence>agpl</licence><author>Workspace contributors</author>
+ <namespace>WorkspaceBotMentions</namespace><category>tools</category>
+ <dependencies><nextcloud min-version="34" max-version="34"/></dependencies>
+</info>

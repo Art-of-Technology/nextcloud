@@ -1,0 +1,13 @@
+# Workspace bot mentions
+
+Adds enabled local-room bots to Talk's JSON mention suggestions for registered participants. Entries are visibly labelled `(bot)`, use `source: bots`, and insert the exact bot display-name alias through `mentionId`. This is a name-based invocation convenience, not a new structured bot-mention protocol: receiving bots must understand `@Name` or the editor's quoted `@"Full Name"` form. No synthetic user accounts or `type:user` parameters are created by this app.
+
+Targets Nextcloud 34 and Talk 24. The global middleware uses supported `afterController` and `beforeOutput` hooks. Nextcloud wraps OCS data before middleware, so successful JSON OCS envelopes are augmented during output; no private response fields or reflection are used. XML is intentionally unchanged. Browser and desktop JSON clients share the server picker; native-client presentation is not guaranteed.
+
+Only successful GET ChatController::mentions responses qualify. Authenticated local room membership is checked again; federation and guests are excluded. Only globally and conversation-enabled bots with message/event support and available backing apps qualify. Ambiguous duplicate aliases, reserved `all`, user-ID collisions, unsafe aliases and invalid room tokens are excluded. Human suggestions retain priority and order. Add-on failures return the original response; no bot configuration or errors are exposed. Augmented responses are private/no-store.
+
+Copy this directory into the server custom app directory and enable `workspace_bot_mentions` with occ. Disable the app to remove the picker addition without changing Talk or stored messages. No database migration or configuration secrets are needed.
+
+Run `php tests/run.php` (PHP with mbstring). This dependency-free harness stubs Nextcloud boundaries and verifies membership, availability, collisions, search/limits, response method/status/format gating and fail-closed behavior. Qualification on real Nextcloud and the shipped client remains required before release.
+
+Release qualification: 20 isolated PHP checks passed. An isolated Nextcloud 34.0.4 / Talk 24.0.5 server passed 11 HTTP checks covering available bots, output fields, caching, search, limits, anonymous/non-member denial, disabling, re-enabling, no-GUI-setup availability and conversation removal. The desktop's actual Talk mention composable and rich editor selected the bot and emitted `@Edison` without the `(bot)` suffix; the existing receiving invocation parser accepted that text. The headless editor test opened the real autocomplete menu programmatically, then exercised keyboard selection and serialization. Native mobile clients have not been qualified.
