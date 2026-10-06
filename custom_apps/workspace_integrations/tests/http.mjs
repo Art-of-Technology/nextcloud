@@ -99,8 +99,8 @@ try {
  await api('bob', 'PATCH', '/api/integrations/' + id, { enabled: false })
  const alicePage = sessions.alice.page
  await alicePage.goto(base + '/')
- await alicePage.getByRole('button', { name: 'My integrations', exact: true }).waitFor({ timeout: 15000 })
- check('management page renders', (await alicePage.locator('body').innerText()).includes('My integrations'))
+ await alicePage.getByRole('button', { name: 'Bots', exact: true }).waitFor({ timeout: 15000 })
+ check('management page renders', (await alicePage.locator('body').innerText()).includes('Your bots'))
  if (process.env.INTEGRATIONS_EVIDENCE_DIR) {
   fs.mkdirSync(process.env.INTEGRATIONS_EVIDENCE_DIR, { recursive: true })
   await alicePage.screenshot({ path: process.env.INTEGRATIONS_EVIDENCE_DIR + '/integrations.png', fullPage: true })
