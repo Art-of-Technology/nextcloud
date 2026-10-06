@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 declare(strict_types=1);
 return ['routes' => [
+ ['name'=>'card#show','url'=>'/api/cards/{cardId}','verb'=>'GET'],
+ ['name'=>'card#page','url'=>'/cards/{cardId}','verb'=>'GET'],
  ['name'=>'page#index','url'=>'/','verb'=>'GET'],
  ['name'=>'api#capabilities','url'=>'/api/capabilities','verb'=>'GET'],
  ['name'=>'api#channelConnections','url'=>'/api/channels/{token}/connections','verb'=>'GET'],

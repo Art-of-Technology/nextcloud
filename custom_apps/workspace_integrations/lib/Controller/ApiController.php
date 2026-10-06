@@ -51,7 +51,8 @@ class ApiController extends Controller {
    $authorization=$this->request->getHeader('Authorization');
    if (!preg_match('/^Bearer ([A-Za-z0-9_-]{32,256})$/D',$authorization,$m)) { return $this->service->deliver($connectionId,'',[]); }
    if (!str_starts_with(strtolower($this->request->getHeader('Content-Type')),'application/json')) { throw new ServiceException('JSON content type required.',415); }
-   $payload=array_intersect_key($this->request->getParams(),array_flip(['text','message','eventId']));
+   $payload=$this->request->getParams();
+   unset($payload['connectionId'], $payload['_route']);
    return $this->service->deliver($connectionId,$m[1],$payload);
   });
  }

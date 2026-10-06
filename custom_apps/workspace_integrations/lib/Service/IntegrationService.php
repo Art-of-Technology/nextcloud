@@ -9,7 +9,7 @@ use OCP\IUserManager;
 
 /** Owns authorization: controller-supplied identifiers never grant authority. */
 class IntegrationService {
-	public function __construct(private Repository $repository, private TalkGateway $talk, private IUserManager $users, private IGroupManager $groups) {}
+	public function __construct(private Repository $repository, private TalkGateway $talk, private IUserManager $users, private IGroupManager $groups, private ?\OCP\IURLGenerator $urls = null) {}
 	private function user(string $uid): void {
 		$user = $this->users->get($uid);
 		if (!AccountAccess::allowed($user)) {
@@ -183,19 +183,18 @@ class IntegrationService {
 	}
 	public function deliver(string $connectionId, string $credential, array $payload): array {
 		$this->authenticConnection($connectionId, $credential);
-		if (array_diff(array_keys($payload), ['text','message','eventId']) || (isset($payload['text']) && isset($payload['message']))) { throw new ServiceException('Unsupported payload.'); }
-		$text = $payload['text'] ?? $payload['message'] ?? null;
-		if (!is_string($text) || trim($text) === '' || strlen($text) > 16000 || !mb_check_encoding($text, 'UTF-8')) { throw new ServiceException('Message must be nonempty UTF-8, at most 16000 bytes.'); }
+		$normalized = (new MessageNormalizer())->normalize($payload);
+		$text = $normalized['text'];
 		$eventId = $payload['eventId'] ?? bin2hex(random_bytes(16));
 		if (!is_string($eventId) || $eventId === '' || strlen($eventId) > 200) { throw new ServiceException('Invalid eventId.'); }
-		$delivery = $this->repository->transaction(function () use ($connectionId, $credential, $eventId, $text) {
+		$delivery = $this->repository->transaction(function () use ($connectionId, $credential, $eventId, $text, $normalized) {
 			// Serializes quota + reservation for this connection; unique index is a second guard.
 			$connection = $this->authenticConnection($connectionId, $credential, true);
 			$integration = $this->repository->one('wi_integrations', $connection['integration_id']);
 			if (!$integration) { throw new ServiceException('Delivery is disabled.', 409); }
 			$this->user($integration['owner_uid']);
 			if (!(bool)$integration['enabled'] || !$this->talk->available($integration, $connection['token'])) { throw new ServiceException('Delivery is disabled.', 409); }
-			$eventHash = hash('sha256', $eventId); $payloadHash = hash('sha256', $text);
+			$eventHash = hash('sha256', $eventId); $payloadHash = $normalized['fingerprint'];
 			$existing = $this->repository->rows('wi_deliveries', ['connection_id'=>$connectionId, 'event_hash'=>$eventHash])[0] ?? null;
 			if ($existing) {
 				if (!hash_equals($existing['payload_hash'], $payloadHash)) { throw new ServiceException('eventId was already used for different content.', 409); }
@@ -204,10 +203,16 @@ class IntegrationService {
 			}
 			if ($this->repository->recentDeliveries($connectionId, time()-60) >= 60) { throw new ServiceException('Rate limit exceeded.', 429); }
 			$id = bin2hex(random_bytes(16));
+			if ($normalized['card'] !== null) {
+				$cardUrl = ($this->urls ?? \OCP\Server::get(\OCP\IURLGenerator::class))->linkToRouteAbsolute('workspace_integrations.card.page', ['cardId'=>$id]);
+				$text .= "\n\n" . $cardUrl;
+				if (strlen($text) > 16000) { throw new ServiceException('Message including card link exceeds 16000 bytes.'); }
+				$this->repository->insert('wi_cards', ['id'=>$id, 'token'=>$connection['token'], 'payload'=>json_encode($normalized['card'] + ['text'=>$normalized['text']], JSON_THROW_ON_ERROR), 'created_at'=>time()]);
+			}
 			$this->repository->insert('wi_deliveries', ['id'=>$id, 'connection_id'=>$connectionId, 'event_hash'=>$eventHash,
 				'payload_hash'=>$payloadHash, 'status'=>'pending', 'message_id'=>'', 'created_at'=>time()]);
 			$this->repository->update('wi_connections', $connectionId, ['last_status'=>'pending','last_at'=>time()]);
-			return ['id'=>$id, 'integration'=>$integration, 'connection'=>$connection];
+			return ['id'=>$id, 'integration'=>$integration, 'connection'=>$connection, 'text'=>$text];
 		});
 		if (isset($delivery['duplicate'])) { return ['status'=>'duplicate','messageId'=>$delivery['messageId']]; }
 		// Deliberately outside the reservation transaction: a crash can never undo the intent.
@@ -216,7 +221,7 @@ class IntegrationService {
 			$integration = $this->repository->one('wi_integrations', $delivery['integration']['id']);
 			if (!$integration || !(bool)$integration['enabled']) { throw new ServiceException('Delivery is disabled.', 409); }
 			$this->user($integration['owner_uid']);
-			$messageId = $this->talk->send($integration, $delivery['connection']['token'], $text, 'wi-' . $delivery['id']);
+			$messageId = $this->talk->send($integration, $delivery['connection']['token'], $delivery['text'], 'wi-' . $delivery['id']);
 			$this->repository->transaction(function () use ($delivery, $connectionId, $messageId) {
 				$this->repository->update('wi_deliveries', $delivery['id'], ['status'=>'delivered','message_id'=>$messageId]);
 				$this->repository->update('wi_connections', $connectionId, ['last_status'=>'delivered','last_at'=>time()]);
