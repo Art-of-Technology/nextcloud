@@ -113,7 +113,8 @@ class ApiController extends Controller {
 			if (!str_starts_with(strtolower($this->request->getHeader('Content-Type')), 'application/json')) {
 				throw new ServiceException('JSON content type required.', 415);
 			}
-			$payload = array_intersect_key($this->request->getParams(), array_flip(['text','message','eventId']));
+			$payload = $this->request->getParams();
+			unset($payload['connectionId'], $payload['_route']);
 			return $this->service->deliver($connectionId, $m[1], $payload);
 		});
 	}

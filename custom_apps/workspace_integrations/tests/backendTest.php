@@ -50,6 +50,7 @@ final class backendTest extends TestCase {
 	private TalkGateway $talk;
 	private IntegrationService $service;
 	private string $credential;
+	private IUserManager $users;
 	protected function setUp(): void {
 		$this->repo = new MemoryRepository();
 		$this->repo->insert('wi_locks', ['id' => 'ownership_quota']);
@@ -67,9 +68,12 @@ final class backendTest extends TestCase {
 			$user->method('getBackendClassName')->willReturn($uid === 'guest' ? 'Guests' : 'Database');
 			return $user;
 		});
+		$this->users = $users;
 		$groups = $this->createStub(IGroupManager::class);
 		$groups->method('isAdmin')->willReturnCallback(static fn ($uid) => $uid === 'admin');
-		$this->service = new IntegrationService($this->repo, $this->talk, $users, $groups);
+		$urls = $this->createStub(\OCP\IURLGenerator::class);
+		$urls->method('linkToRouteAbsolute')->willReturnCallback(static fn ($route, $params) => 'https://chat.example/apps/workspace_integrations/cards/' . $params['cardId']);
+		$this->service = new IntegrationService($this->repo, $this->talk, $users, $groups, $urls);
 		$this->credential = str_repeat('a', 64);
 		$this->repo->insert('wi_integrations', ['id' => 'integration', 'owner_uid' => 'owner', 'name' => 'Audit', 'description' => '', 'bot_id' => 1, 'enabled' => 1, 'created_at' => 1]);
 		$this->repo->insert('wi_connections', ['id' => 'connection', 'integration_id' => 'integration', 'token' => 'roomtoken', 'credential_hash' => hash('sha256', $this->credential), 'enabled' => 1, 'last_status' => '', 'last_at' => 0, 'created_at' => 1]);
@@ -202,5 +206,65 @@ final class backendTest extends TestCase {
 		$created = $this->service->create('owner', 'Fresh worker');
 		self::assertSame('Fresh worker', $created['name']);
 		self::assertNotNull($this->repo->one('wi_locks', 'ownership_quota'));
+	}
+
+	public function testRichReservationIsImmutableAndDeduplicatesFullPayload(): void {
+		$this->talk->expects(self::once())->method('send')->willReturnCallback(function ($integration, $token, $text, $reference) {
+			$id = substr($reference, 3);
+			self::assertSame('pending', $this->repo->tables['wi_deliveries'][$id]['status']);
+			self::assertArrayHasKey($id, $this->repo->tables['wi_cards']);
+			self::assertStringContainsString('/cards/' . $id, $text);
+			return '901';
+		});
+		$payload = ['text' => 'Summary','blocks' => [['type' => 'section','text' => ['type' => 'mrkdwn','text' => '*Details*']]],'eventId' => 'rich1'];
+		self::assertSame('delivered', $this->service->deliver('connection', $this->credential, $payload)['status']);
+		self::assertSame('duplicate', $this->service->deliver('connection', $this->credential, $payload)['status']);
+		self::assertCount(1, $this->repo->tables['wi_cards']);
+		$payload['blocks'][0]['text']['text'] = 'Changed';
+		$this->expectException(ServiceException::class);
+		$this->expectExceptionMessage('different content');
+		$this->service->deliver('connection', $this->credential, $payload);
+	}
+	public function testCardReadRechecksMembershipEveryTime(): void {
+		$id = str_repeat('a', 32);
+		$this->repo->insert('wi_cards', ['id' => $id,'token' => 'roomtoken','payload' => '{"schemaVersion":1,"blocks":[],"text":"Notice"}']);
+		$this->repo->insert('wi_deliveries', ['id' => $id,'status' => 'delivered','message_id' => '901']);
+		$service = new \OCA\WorkspaceIntegrations\Service\CardService($this->repo, $this->talk, $this->users);
+		$calls = 0;
+		$this->talk->expects(self::exactly(2))->method('assertCardVisible')->with('owner', 'roomtoken', '901')->willReturnCallback(function () use (&$calls) {
+			if (++$calls === 2) {
+				throw new ServiceException('Card not found.', 404);
+			}
+		});
+		self::assertSame('Notice', $service->read('owner', $id)['text']);
+		$this->expectException(ServiceException::class);
+		$service->read('owner', $id);
+	}
+	public function testPendingAndUncertainCardsAreUnreadable(): void {
+		$id = str_repeat('b', 32);
+		$this->repo->insert('wi_cards', ['id' => $id,'token' => 'roomtoken','payload' => '{}']);
+		$this->talk->expects(self::never())->method('assertCardVisible');
+		$service = new \OCA\WorkspaceIntegrations\Service\CardService($this->repo, $this->talk, $this->users);
+		foreach (['pending','uncertain'] as $state) {
+			$this->repo->insert('wi_deliveries', ['id' => $id,'status' => $state,'message_id' => '']);
+			try {
+				$service->read('owner', $id);
+				self::fail('Must deny incomplete delivery');
+			} catch (ServiceException $e) {
+				self::assertSame(404, $e->status);
+			}
+		}
+	}
+	public function testCardsDenyDisabledAndGuestAccounts(): void {
+		$this->talk->expects(self::never())->method('assertCardVisible');
+		$service = new \OCA\WorkspaceIntegrations\Service\CardService($this->repo, $this->talk, $this->users);
+		foreach (['missing','disabled','guest'] as $uid) {
+			try {
+				$service->read($uid, str_repeat('c', 32));
+				self::fail('Must deny account');
+			} catch (ServiceException $e) {
+				self::assertSame(404, $e->status);
+			}
+		}
 	}
 }

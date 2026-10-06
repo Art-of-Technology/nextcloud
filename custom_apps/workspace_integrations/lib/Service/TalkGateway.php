@@ -131,6 +131,21 @@ class TalkGateway {
 			return '(unavailable)';
 		}
 	}
+	public function assertCardVisible(string $uid, string $token, string $messageId): void {
+		try {
+			$room = Server::get(Manager::class)->getRoomByToken($token);
+			$participant = Server::get(ParticipantService::class)->getParticipant($room, $uid);
+			if ($room->isFederatedConversation() || $participant->getAttendee()->getActorType() !== Attendee::ACTOR_USERS) {
+				throw new \RuntimeException();
+			}
+			$comment = Server::get(ChatManager::class)->getComment($room, $messageId);
+			if ($comment->getVerb() !== ChatManager::VERB_MESSAGE) {
+				throw new \RuntimeException();
+			}
+		} catch (\Throwable) {
+			throw new ServiceException('Card not found.', 404);
+		}
+	}
 	public function send(array $integration, string $token, string $text, string $reference): string {
 		if (!$this->available($integration, $token)) {
 			throw new ServiceException('Delivery is disabled.', 409);

@@ -18,6 +18,8 @@ class Application extends App implements IBootstrap {
 	}
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(BeforeTemplateRenderedEvent::class, PageListener::class);
+		$context->registerReferenceProvider(\OCA\WorkspaceIntegrations\Reference\CardReferenceProvider::class);
+		$context->registerEventListener(\OCP\Collaboration\Reference\RenderReferenceEvent::class, \OCA\WorkspaceIntegrations\Listener\RenderReferenceListener::class);
 	}
 	public function boot(IBootContext $context): void {
 	}

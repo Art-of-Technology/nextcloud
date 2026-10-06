@@ -3,7 +3,7 @@
  <id>workspace_integrations</id><name>Integrations</name>
  <summary>Manage notification bots and channel webhooks</summary>
  <description>Self-service notification integrations with ownership and administrator management.</description>
- <version>1.0.0</version><licence>agpl</licence><author>Workspace contributors</author>
+ <version>1.1.0</version><licence>agpl</licence><author>Workspace contributors</author>
  <namespace>WorkspaceIntegrations</namespace><category>tools</category>
  <dependencies><nextcloud min-version="34" max-version="34"/></dependencies>
  <navigations><navigation><name>Integrations</name><route>workspace_integrations.page.index</route><order>50</order></navigation></navigations>
