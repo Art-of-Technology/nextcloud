@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "streams": [],
+  "decisions": [],
+  "note": "No upstream review has been performed by installing this guidance. Initialize each stream from a verified fork point or pinned source baseline; never skip unreviewed history."
+}
