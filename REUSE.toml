@@ -345,3 +345,62 @@ path = ["custom_apps/workspace_integrations/css/notification-card.css", "custom_
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Erdem Şekerci <herdemsekerci@gmail.com>"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# Explicit fork-authored baseline files; upstream and external assets are not covered.
+[[annotations]]
+path = [
+  "company/README.md",
+  "company/deployment/.env.example",
+  "company/deployment/nextcloud-hpb-README.md",
+  "company/deployment/nextcloud-hpb.compose.yaml",
+  "company/deployment/nextcloud-push.compose.yaml",
+  "company/deployment/nextcloud-realtime-README.md",
+  "company/notification-sounds.php",
+  "custom_apps/workspace_bot_mentions/README.md",
+  "custom_apps/workspace_bot_mentions/appinfo/info.xml",
+  "custom_apps/workspace_bot_mentions/lib/AppInfo/Application.php",
+  "custom_apps/workspace_bot_mentions/lib/Middleware/MentionMiddleware.php",
+  "custom_apps/workspace_bot_mentions/lib/Service/BotSuggestions.php",
+  "custom_apps/workspace_bot_mentions/tests/run.php",
+  "custom_apps/workspace_integrations/README.md",
+  "custom_apps/workspace_integrations/appinfo/info.xml",
+  "custom_apps/workspace_integrations/appinfo/routes.php",
+  "custom_apps/workspace_integrations/css/integrations.css",
+  "custom_apps/workspace_integrations/js/discover.js",
+  "custom_apps/workspace_integrations/js/integrations.js",
+  "custom_apps/workspace_integrations/lib/AppInfo/Application.php",
+  "custom_apps/workspace_integrations/lib/Controller/ApiController.php",
+  "custom_apps/workspace_integrations/lib/Controller/PageController.php",
+  "custom_apps/workspace_integrations/lib/Db/Repository.php",
+  "custom_apps/workspace_integrations/lib/Listener/PageListener.php",
+  "custom_apps/workspace_integrations/lib/Migration/Version010000Date20261006000000.php",
+  "custom_apps/workspace_integrations/lib/Migration/Version010000Date20261006000001.php",
+  "custom_apps/workspace_integrations/lib/Migration/Version010000Date20261006000002.php",
+  "custom_apps/workspace_integrations/lib/Service/AccountAccess.php",
+  "custom_apps/workspace_integrations/lib/Service/IntegrationService.php",
+  "custom_apps/workspace_integrations/lib/Service/ServiceException.php",
+  "custom_apps/workspace_integrations/lib/Service/TalkGateway.php",
+  "custom_apps/workspace_integrations/templates/index.php",
+  "custom_apps/workspace_integrations/tests/backend-bootstrap.php",
+  "custom_apps/workspace_integrations/tests/backendTest.php",
+  "custom_apps/workspace_integrations/tests/discover.mjs",
+  "custom_apps/workspace_integrations/tests/http.mjs",
+  "custom_apps/workspace_integrations/tests/ui-smoke.cjs",
+  "custom_apps/workspace_invites/README.md",
+  "custom_apps/workspace_invites/appinfo/info.xml",
+  "custom_apps/workspace_invites/appinfo/routes.php",
+  "custom_apps/workspace_invites/css/users.css",
+  "custom_apps/workspace_invites/js/users.js",
+  "custom_apps/workspace_invites/lib/AppInfo/Application.php",
+  "custom_apps/workspace_invites/lib/Controller/LinkController.php",
+  "custom_apps/workspace_invites/lib/Listener/UsersListener.php",
+  "custom_apps/workspace_onboarding/README.md",
+  "custom_apps/workspace_onboarding/appinfo/info.xml",
+  "custom_apps/workspace_onboarding/css/notifications.css",
+  "custom_apps/workspace_onboarding/js/notifications.js",
+  "custom_apps/workspace_onboarding/lib/AppInfo/Application.php",
+  "custom_apps/workspace_onboarding/lib/Listener/PageListener.php",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Fork contributors"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
