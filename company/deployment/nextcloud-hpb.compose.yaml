@@ -1,12 +1,11 @@
 # STAGED ONLY: do not configure Talk globally until external TURN/media passes.
-name: nextcloud-talk-hpb
+name: ${HPB_PROJECT_NAME:?Set HPB project name}
 services:
   hpb:
     image: ghcr.io/nextcloud-releases/aio-talk@sha256:f0b32ce140d1f2863dbaf84b3e64a2400df61ce959a3478cc41304887252ea18
-    container_name: nextcloud-talk-hpb
     restart: unless-stopped
     environment:
-      NC_DOMAIN: nextcloud.weezbooapps.com
+      NC_DOMAIN: ${NC_DOMAIN:?Set Nextcloud hostname}
       TALK_HOST: hpb
       TALK_PORT: "3478"
       TURN_DOMAIN: hpb
@@ -16,8 +15,8 @@ services:
       SKIP_CERT_VERIFY: "false"
       AIO_LOG_LEVEL: warn
     ports:
-      - "127.0.0.1:18081:8081"
-    networks: [default, dokploy-network]
+      - "127.0.0.1:${HPB_LOOPBACK_PORT:?Set local signaling port}:8081"
+    networks: [default, proxy]
     mem_limit: 1g
     cpus: 1.0
     logging:
@@ -27,5 +26,6 @@ services:
         max-file: "3"
 networks:
   default: {}
-  dokploy-network:
+  proxy:
     external: true
+    name: ${PROXY_NETWORK:?Set existing reverse proxy network}

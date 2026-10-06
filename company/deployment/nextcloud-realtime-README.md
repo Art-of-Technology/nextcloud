@@ -1,38 +1,52 @@
-# Real-time deployment state (2026-09-28)
+# Real-time companion deployment templates
 
-Client Push1.4.1 is enabled and running. Public endpoint:
-`https://nextcloud.weezbooapps.com/push`.
-All native setup checks pass (Redis, database, app connection, exact proxy trust and version match).
+These templates document reusable Client Push and staged Talk HPB configuration.
+They do not claim that a specific installation is running or has passed acceptance.
+Keep hostnames, addresses, network assignments, mount paths, backups and operational
+evidence outside the source checkout. Example public endpoints are
+`https://nextcloud.example/push` and
+`wss://nextcloud.example/standalone-signaling/spreed`.
 
-Persistent service configuration is `/srv/nextcloud/client-push/compose.json`,
-with root0600 `.env`. It uses the app-store-provided binary mounted read-only.
-After a notify_push app update recreate the daemon and rerun setup to verify matching versions.
-The dedicated internal Docker network `nextcloud-push-internal` uses172.30.27.0/28:
-push172.30.27.2, app172.30.27.3 alias `nextcloud-push-app`.
-The app's network attachment is persisted in the existing Dokploy Compose configuration.
-Companion services currently use separate on-host Compose projects with restart policies;
-they are not yet separate Dokploy UI entries.
+Copy `.env.example` outside the checkout, restrict its permissions, and fill the
+variables needed by the selected Compose file. For Client Push:
 
-`zz-push.config.php` trusts only the existing immediate proxy10.0.1.2 and push172.30.27.2,
-and permits the public hostname and private push callback alias.
-Host-specific Traefik dynamic routes strip `/push` and `/standalone-signaling`.
-The existing manager route forwards both paths to the application VM.
-No new inbound public ports were opened.
+- `PUSH_PROJECT_NAME` selects the project; use the same value for rollback.
+- `PUSH_BINARY_PATH` is the absolute path to the app-provided notify_push binary
+  for the host architecture. It is mounted read-only; a missing path must fail.
+- `PUSH_ENV_FILE` is an absolute path to a separate private daemon environment
+  file containing `DATABASE_URL`, `DATABASE_PREFIX`, `REDIS_URL`, `NEXTCLOUD_URL`
+  and `PORT`. Keep credentials out of the Compose interpolation file when possible.
+  `NEXTCLOUD_URL` must reach the application through its configured internal alias;
+  set `PORT` to the daemon port used by the reverse proxy.
+- `BACKEND_NETWORK` and `PROXY_NETWORK` name existing external networks.
+- `PUSH_INTERNAL_NETWORK` names the dedicated existing internal network;
+  `PUSH_INTERNAL_IP` must be a free static address within its configured subnet.
 
-The staged HPB is reachable over public authenticated WSS at
-`wss://nextcloud.weezbooapps.com/standalone-signaling/spreed`.
-Valid internal HMAC authentication passes; invalid authentication is rejected.
-This is an infrastructure readiness check, not an end-user/media acceptance test.
-The global Talk HPB setting remains disabled until public TURN/media connectivity is established.
-The current HTTP tunnel cannot provide public TURN UDP. See the separate HPB staging notes.
+Persist the application attachment and callback alias on that dedicated network
+in the application's private deployment configuration. Trust only the actual
+immediate proxy and push addresses in Nextcloud; allow the public hostname and
+callback alias without broadly trusting the subnet. Reserve static addresses to
+prevent collisions. Keep the selected network subnet and application address in
+private configuration, not this repository.
 
-A disposable-account public browser test discovered a new conversation within5seconds
-after Client Push deployment, compared with20seconds in the earlier baseline.
-These are single observations, not a latency percentile or load-test result.
-Browser and OS sound/popup permissions still require client acceptance.
+Validate with `docker compose --env-file /path/to/private.env -f
+company/deployment/nextcloud-push.compose.yaml config --quiet` (on one line).
+Replace the example path locally. This command does not start containers.
+After a notify_push app update, recreate the daemon and rerun native setup checks
+for Redis, database, application connection, exact proxy trust and version match.
+Host-specific reverse proxy routes can strip `/push` and `/standalone-signaling`;
+configure their service targets and ports privately. No public daemon port is
+published by the push template.
 
-Config backups before deployment are under `/srv/nextcloud/config-backups/`.
-Rollback Client Push: clear its configured endpoint using its supported reset command,
-stop only the companion push project, remove its host-specific route, and restore the
-prior proxy/domain configuration from the protected backup. Preserve the application database,
-MSA mounts and custom_apps/workspace_invites. Do not run unrelated Compose projects down.
+See [HPB staging](nextcloud-hpb-README.md) for signaling and media acceptance.
+Keep the global Talk HPB setting disabled until public TURN/media acceptance.
+Test notification delivery with disposable users; browser and OS notification
+permissions require client acceptance. Single latency observations do not prove
+load capacity or latency percentiles.
+
+Before deployment, protect application configuration and preference backups in a
+private location. Roll back Client Push by clearing its configured endpoint with
+its supported reset command, stopping only its companion project, removing its
+route, and restoring prior proxy/domain configuration from the protected backup.
+Preserve the application database, storage mounts and custom apps. Never stop
+unrelated Compose projects as part of this rollback.

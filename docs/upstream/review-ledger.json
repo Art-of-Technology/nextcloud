@@ -1,6 +1,38 @@
 {
   "schemaVersion": 1,
-  "streams": [],
+  "streams": [
+    {
+      "id": "server-stable34",
+      "sourceRepository": "nextcloud/server",
+      "supportRef": "stable34",
+      "localComponent": "Nextcloud Server",
+      "baselineSha": "77c7284fed1f5c7b4bce1a94299e229f3281b606",
+      "reviewedThrough": null,
+      "lastCompleteReviewAt": null,
+      "report": "docs/upstream/reviews/2026-10-06-baseline-review.md",
+      "gaps": [
+        "Shallow history; baseline-to-tip enumeration and patch assessment incomplete.",
+        "Official advisory coverage and affected-version assessment incomplete."
+      ],
+      "lastAttemptAt": "2026-10-06T15:28:09.379710Z",
+      "observedTipSha": "43be973499e2d8dcef0ad5065074c2e41944ec0b"
+    },
+    {
+      "id": "talk-web",
+      "sourceRepository": "nextcloud/spreed",
+      "supportRef": null,
+      "localComponent": "Talk web (external installation)",
+      "baselineSha": null,
+      "reviewedThrough": null,
+      "lastCompleteReviewAt": null,
+      "report": "docs/upstream/reviews/2026-10-06-baseline-review.md",
+      "gaps": [
+        "Installed package/source pin and matching support ref unknown.",
+        "No upstream enumeration, patch or advisory assessment performed."
+      ],
+      "lastAttemptAt": "2026-10-06T15:28:09.379710Z"
+    }
+  ],
   "decisions": [],
-  "note": "No upstream review has been performed by installing this guidance. Initialize each stream from a verified fork point or pinned source baseline; never skip unreviewed history."
+  "note": "Partial baseline review recorded; neither stream has a complete review. No upstream adoption implied."
 }

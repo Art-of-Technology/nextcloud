@@ -1,33 +1,42 @@
-# Talk HPB staging
+# Talk HPB staging template
 
-Official AIO Talk image bundles Spreed signaling 2.1.1, NATS, Janus and TURN.
-VM2700 10.34.9.84 stores root-only configuration in `/srv/nextcloud/talk-hpb`
-on the verified MSA filesystem. `compose.json` is the live equivalent of the
-sanitized YAML here. `.env` contains three independent secrets, mode0600;
-never commit or print it. `image.lock` pins the deployed digest.
+The pinned official AIO Talk image bundles signaling, NATS, Janus and TURN.
+This file describes a reusable template, not the state of a running deployment.
+Keep host identities, exact network assignments, credentials, image locks and
+operational evidence in private configuration outside the source checkout.
 
-Container `nextcloud-talk-hpb` publishes only loopback18081 to signaling8081.
-Traefik can reach8081 via the external `dokploy-network`; WebSocket endpoint is
-`/spreed`, HTTP welcome `/api/v1/welcome`. A public route may strip a
-`/standalone-signaling` prefix. Shared network routing is managed separately.
+Copy `.env.example` to a private file outside the checkout, restrict its permissions
+(for example mode 0600 on Linux), and fill every variable required by the selected
+Compose file. Generate three independent secrets. Set `NC_DOMAIN` to the actual
+Nextcloud hostname; `nextcloud.example` is a documentation example only.
+`HPB_PROJECT_NAME` identifies the Compose project and `PROXY_NETWORK` names an
+existing external reverse proxy network. Do not print the private environment.
 
-The service is staged, not configured as Nextcloud's global Talk HPB. There
-are no published TURN or media ports. `TURN_DOMAIN=hpb` is deliberately local
-for staging: replace only after the real external media path is designed and
-tested. Do not direct public users to these private ICE candidates.
+Validate with `docker compose --env-file /path/to/private.env -f
+company/deployment/nextcloud-hpb.compose.yaml config --quiet` (on one line).
+The example path must be replaced locally. Validation is not deployment approval.
 
-Initial budget1CPU/1GiB on a4CPU/8GiBVM; preflight6.9GiB available. This is not
-a demonstrated company call-capacity guarantee. Load test before wider rollout.
+The signaling listener publishes only `127.0.0.1:${HPB_LOOPBACK_PORT}:8081`.
+Preserve that loopback binding. The reverse proxy can reach service `hpb` on
+port 8081 through the configured proxy network. The WebSocket endpoint is
+`/spreed` and HTTP welcome is `/api/v1/welcome`. A public route may strip a
+`/standalone-signaling` prefix. Routing and certificates are managed separately.
+Avoid duplicate service aliases if sharing a network with another HPB project.
 
-Validation: image health healthy, local welcome200, WebSocket101, internal
-authentication accepted with correct HMAC and rejected with incorrect HMAC.
-`scripts/verify-hpb.py` reads root-only secrets locally and prints no tokens.
-This proves the signaling transport/auth mechanism, not user login or media.
+The template publishes no TURN or media ports. `TURN_DOMAIN=hpb` and
+`TALK_HOST=hpb` are deliberately local service names for staging. Design and test
+the external media path before changing them or configuring a global Talk HPB.
+Do not direct public users to private ICE candidates. An HTTP tunnel alone does
+not provide public TURN UDP media.
 
-Pending: external WSS path, actual Nextcloud user authentication, public TURN
-and relay connectivity, external-network call test, concurrency/resource test.
-Cloudflare's existing HTTP tunnel alone does not carry TURN UDP media.
+The initial resource limits are one CPU and 1 GiB. Load test before wider use.
+Required acceptance includes the local welcome response, a WebSocket upgrade,
+correct-HMAC acceptance and incorrect-HMAC rejection, actual Nextcloud user
+authentication, public TURN relay connectivity, an external-network call, and
+concurrency/resource testing. Signaling health alone does not prove media works.
+Keep secrets and acceptance evidence private; no live qualification is implied.
 
-Rollback staged service: run Docker Compose down for this project only;
-retain `.env`, image.lock and configuration. No Nextcloud global setting has
-been modified by this staging script.
+To roll back a staged service, run Compose down with the same private environment
+file and this Compose file, scoped to its project. Retain protected configuration
+and image locks. Restore any separately changed application settings and routes
+from the private operational record.

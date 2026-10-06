@@ -1,34 +1,38 @@
-# Live companion service. .env holds DATABASE_URL, DATABASE_PREFIX, REDIS_URL,
-# NEXTCLOUD_URL=http://nextcloud-push-app and PORT=7867; do not commit .env.
-name: nextcloud-client-push
+# Companion service template. Keep runtime credentials outside the checkout.
+name: ${PUSH_PROJECT_NAME:?Set push project name}
 services:
   push:
     image: nextcloud:34.0.4-apache@sha256:20298c35b8fed1d9cbbc55dad09976424696856f06f1984fba951d8184b7bfce
-    container_name: nextcloud-push
     user: '33:33'
     entrypoint: [/notify_push]
-    env_file: [.env]
+    env_file: ["${PUSH_ENV_FILE:?Set absolute private push environment file path}"]
     restart: unless-stopped
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
     mem_limit: 256m
     volumes:
-      - /srv/nextcloud/app/custom_apps/notify_push/bin/x86_64/notify_push:/notify_push:ro
+      - type: bind
+        source: ${PUSH_BINARY_PATH:?Set absolute notify_push binary path}
+        target: /notify_push
+        read_only: true
+        bind:
+          create_host_path: false
     networks:
       backend: {}
-      dokploy-network: {}
+      proxy: {}
       push-internal:
-        ipv4_address: 172.30.27.2
+        ipv4_address: ${PUSH_INTERNAL_IP:?Set push address in the internal network subnet}
     logging:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
 networks:
   backend:
     external: true
-    name: compose-reboot-redundant-system-pfhjst_backend
-  dokploy-network:
+    name: ${BACKEND_NETWORK:?Set existing application backend network}
+  proxy:
     external: true
+    name: ${PROXY_NETWORK:?Set existing reverse proxy network}
   push-internal:
     external: true
-    name: nextcloud-push-internal
+    name: ${PUSH_INTERNAL_NETWORK:?Set existing dedicated internal network}

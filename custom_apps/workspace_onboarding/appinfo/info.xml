@@ -6,7 +6,7 @@
   <description>A dismissible prompt lets users request notification permission with an explicit click.</description>
   <version>1.0.0</version>
   <licence>agpl</licence>
-  <author>Weezboo</author>
+  <author>Fork contributors</author>
   <namespace>WorkspaceOnboarding</namespace>
   <category>tools</category>
   <dependencies><nextcloud min-version="34" max-version="34"/></dependencies>

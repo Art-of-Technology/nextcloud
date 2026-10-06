@@ -24,10 +24,12 @@ The initial extension was tested against Nextcloud34.0.4 with disposable account
 
 ### Notification sound defaults
 
-Both Notifications app defaults (`sound_notification` and `sound_talk`) are enabled on our instance. Existing accounts were updated once on2026-09-28. These are supported application preferences, not core patches. New accounts inherit the defaults; users can later opt out.
+The Notifications app defaults (`sound_notification` and `sound_talk`) can be enabled through supported application preferences. New accounts inherit configured defaults; users can later opt out. Keep deployment-specific changes and acceptance records outside this repository.
 
 `company/notification-sounds.php` inspects effective preferences by default. To initialize a new deployment or explicitly migrate existing accounts, run it as the web-server user using PHP CLI with `--apply`. Set `NEXTCLOUD_ROOT` if the installation is not `/var/www/html`. Back up the current preferences before applying; rerunning with `--apply` intentionally overrides existing users' sound choices. Do not schedule it as a recurring enforcement job. Reload existing browser tabs to load the changed settings. Each browser still needs notification permission; the server cannot grant that permission.
 
 Real-time delivery is deployment infrastructure, separate from our extension code. Track HPB/WebSocket signaling, Client Push, TURN/media connectivity, notification acceptance, backups and security in repository issues. A desktop client alone does not configure the server backend.
 
 Secrets belong in deployment secret storage. Never commit database credentials, reset links, API keys, SSH keys or webhook secrets. The GitHub Push webhook is managed in repository settings, outside the source tree.
+
+Reusable companion-service templates and private configuration requirements are documented in [real-time deployment guidance](deployment/nextcloud-realtime-README.md). The templates do not establish the state or acceptance of any running installation.
