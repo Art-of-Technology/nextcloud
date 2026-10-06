@@ -11,7 +11,7 @@ class PageListener implements IEventListener {
  public function __construct(private IUserSession $session) {}
  public function handle(Event $event): void {
   $user=$this->session->getUser();
-  if (!$event instanceof BeforeTemplateRenderedEvent || $user===null || !$user->isEnabled() || str_contains(strtolower($user->getBackendClassName()),'guest') || $event->getResponse()->getRenderAs()!==TemplateResponse::RENDER_AS_USER) { return; }
+  if (!$event instanceof BeforeTemplateRenderedEvent || !\OCA\WorkspaceIntegrations\Service\AccountAccess::allowed($user) || $event->getResponse()->getRenderAs()!==TemplateResponse::RENDER_AS_USER) { return; }
   Util::addScript('workspace_integrations','discover');
  }
 }
