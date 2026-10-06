@@ -1,7 +1,7 @@
 # Company extensions and deployment work
 
 This repository is a fork of [Nextcloud Server](https://github.com/nextcloud/server).
-The `company/34` branch starts at upstream `v34.0.4`, matching the application version used when this branch was created. Upstream `master` is retained for reference; it is not a production deployment target.
+After consolidation, `main` is the integration target. The historical `company/34` release line starts at upstream `v34.0.4`, matching the application version used when that branch was created. Server 34 remains the supported compatibility boundary; a future-major upgrade requires a separate migration decision. Upstream `master` is retained for reference; it is not a production deployment target.
 
 ## Extension boundary
 

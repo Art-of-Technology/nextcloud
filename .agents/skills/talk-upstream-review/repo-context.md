@@ -6,9 +6,11 @@
 ## Repositories and baselines
 
 - Fork: `Art-of-Technology/nextcloud`; server parent: `nextcloud/server`.
-- At policy creation, fork default and integration line are `company/34`; verify
-  current default/release branches at each review. Upstream `master` is not the
-  deployment target; branch names alone do not establish the deployed version.
+- After consolidation, `main` is the integration target and intended default;
+  `company/34` is the historical release line. Server 34 remains the supported
+  compatibility boundary. Verify the live default/release branches at each review.
+  Upstream `master` is not the deployment target; branch names alone do not
+  establish the deployed version.
 - `company/README.md` records a `v34.0.4` starting point; `version.php` reports
   34.0.4 in this snapshot. Revalidate refs, ancestry and version at each review.
 - Track matching upstream `stable34` fixes, releases and security advisories.

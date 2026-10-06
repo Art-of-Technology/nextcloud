@@ -21,9 +21,11 @@ separate; never infer the deployed Talk version from this server checkout.
 ## Extension and deployment boundaries
 
 Preserve supported app APIs/events and the `custom_apps/` extension boundary.
-The integration line is `company/34`; upstream `master` is reference material,
-not the deployment target. Verify current refs and compatibility before proposing
-changes. A future-major merge requires a separate migration decision.
+After consolidation, `main` is the integration target; `company/34` is the
+historical release line. Server 34 remains the supported compatibility boundary.
+Upstream `master` is reference material, not the deployment target. Verify current
+refs and compatibility before proposing changes. A future-major merge requires
+a separate migration decision.
 
 Keep committed additions brand-neutral. Deployment identities, hosts, secrets,
 branding configuration and private operational evidence belong outside committed
