@@ -182,3 +182,9 @@ cypress/snapshots
 cypress/videos
 
 /.direnv
+
+# Private companion-service configuration; commit only the generic example.
+/company/deployment/.env
+/company/deployment/.env.*
+!/company/deployment/.env.example
+/company/deployment/*.private.*

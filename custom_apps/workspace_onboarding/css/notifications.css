@@ -1,0 +1,14 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+#workspace-notification-prompt {
+    position: fixed; bottom: 20px; right: 20px; z-index: 1900;
+    width: min(460px, calc(100vw - 40px)); box-sizing: border-box;
+    padding: 18px; border-radius: 12px;
+    background: var(--color-main-background, #fff); color: var(--color-main-text, #222);
+    border: 1px solid var(--color-border, #ccc); box-shadow: 0 4px 24px #0003;
+}
+#workspace-notification-prompt p { margin: 0 0 12px; line-height: 1.5; }
+#workspace-notification-prompt button { margin: 4px 8px 0 0; min-height: 44px; }
+#workspace-notification-prompt button[hidden] { display: none; }
+#workspace-notification-prompt button:first-of-type {
+    background: var(--color-primary-element, #00679e); color: var(--color-primary-element-text, #fff);
+}
