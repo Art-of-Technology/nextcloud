@@ -338,3 +338,10 @@ path = ["openapi.json", ".envrc", "flake.nix", "flake.lock", "build/eslint-basel
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2025 Nextcloud GmbH and Nextcloud contributors"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# New structured-notification implementation; exact paths preserve vendored byte identity.
+[[annotations]]
+path = ["custom_apps/workspace_integrations/css/notification-card.css", "custom_apps/workspace_integrations/docs/message-format.md", "custom_apps/workspace_integrations/js/card-widget.js", "custom_apps/workspace_integrations/js/notification-card.js", "custom_apps/workspace_integrations/lib/Controller/CardController.php", "custom_apps/workspace_integrations/lib/Listener/RenderReferenceListener.php", "custom_apps/workspace_integrations/lib/Migration/Version010100Date20261006000000.php", "custom_apps/workspace_integrations/lib/Reference/CardReferenceProvider.php", "custom_apps/workspace_integrations/lib/Service/CardService.php", "custom_apps/workspace_integrations/lib/Service/MessageNormalizer.php", "custom_apps/workspace_integrations/templates/card.php", "custom_apps/workspace_integrations/tests/card-renderer.cjs", "custom_apps/workspace_integrations/tests/cards-http.py", "custom_apps/workspace_integrations/tests/message-normalizer.php"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Erdem Şekerci <herdemsekerci@gmail.com>"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
