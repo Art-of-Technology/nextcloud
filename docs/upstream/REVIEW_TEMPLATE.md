@@ -1,5 +1,8 @@
 # Upstream review — <UTC date>
 
+<!-- SPDX-FileCopyrightText: 2026 Fork contributors -->
+<!-- SPDX-License-Identifier: MIT -->
+
 Status: DRAFT / PARTIAL / COMPLETE. No adoption is implied by this report.
 
 ## Scope and evidence

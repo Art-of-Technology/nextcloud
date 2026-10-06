@@ -5,6 +5,9 @@ description: Review upstream changes for this customized Talk fork, assess secur
 
 # Selective upstream maintenance
 
+<!-- SPDX-FileCopyrightText: 2026 Fork contributors -->
+<!-- SPDX-License-Identifier: MIT -->
+
 This fork is an independent product. Upstream is a source of reviewed improvements, not a branch to synchronize blindly. Read [repo-context.md](repo-context.md), root AGENTS.md, and current customization/build guidance before reviewing.
 
 ## Trigger and authority

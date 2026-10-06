@@ -1,5 +1,8 @@
 # Repository guidance
 
+<!-- SPDX-FileCopyrightText: 2026 Fork contributors -->
+<!-- SPDX-License-Identifier: MIT -->
+
 ## Upstream review
 
 Use the repository-local [Talk upstream review skill](.agents/skills/talk-upstream-review/SKILL.md)

@@ -1,5 +1,8 @@
 # Nextcloud Server and Talk web review profile
 
+<!-- SPDX-FileCopyrightText: 2026 Fork contributors -->
+<!-- SPDX-License-Identifier: MIT -->
+
 ## Repositories and baselines
 
 - Fork: `Art-of-Technology/nextcloud`; server parent: `nextcloud/server`.
