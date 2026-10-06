@@ -16,7 +16,7 @@ class PageController extends Controller {
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private IUserSession $session
+		private IUserSession $session,
 	) {
 		parent::__construct($appName, $request);
 	}

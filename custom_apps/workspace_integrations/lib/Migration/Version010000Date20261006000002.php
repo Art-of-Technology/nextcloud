@@ -13,7 +13,7 @@ use OCP\Migration\SimpleMigrationStep;
 
 final class Version010000Date20261006000002 extends SimpleMigrationStep {
 	public function __construct(
-		private IDBConnection $db
+		private IDBConnection $db,
 	) {
 	}
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {

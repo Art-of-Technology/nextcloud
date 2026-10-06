@@ -16,7 +16,7 @@ use OCP\Server;
 class BotSuggestions {
 	public function __construct(
 		private IUserSession $users,
-		private IUserManager $userManager
+		private IUserManager $userManager,
 	) {
 	}
 

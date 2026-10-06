@@ -14,7 +14,7 @@ class MentionMiddleware extends Middleware {
 	private bool $eligible = false;
 	public function __construct(
 		private IRequest $request,
-		private BotSuggestions $suggestions
+		private BotSuggestions $suggestions,
 	) {
 	}
 	private function target(Controller $controller, string $methodName): bool {

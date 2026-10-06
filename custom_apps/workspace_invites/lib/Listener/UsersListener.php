@@ -13,7 +13,7 @@ use OCP\Util;
 class UsersListener implements IEventListener {
 	public function __construct(
 		private IUserSession $session,
-		private IGroupManager $groups
+		private IGroupManager $groups,
 	) {
 	}
 	public function handle(Event $event): void {

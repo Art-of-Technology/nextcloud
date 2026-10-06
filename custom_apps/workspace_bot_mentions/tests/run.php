@@ -22,7 +22,7 @@ namespace OCP\AppFramework { class Controller {
 namespace OCP\AppFramework\Http { class Response {
 	public array $headers = ['Content-Length' => '1','X-Preserve' => 'yes'];
 	public function __construct(
-		public int $status = 200
+		public int $status = 200,
 	) {
 	} public function getStatus() {
 		return $this->status;
@@ -39,7 +39,7 @@ namespace OCA\Talk { class Manager {
 	public function getRoomForUserByToken($t, $u) {
 		return new class($this->federated) {
 			public function __construct(
-				private bool $f
+				private bool $f,
 			) {
 			} public function isFederatedConversation() {
 				return $this->f;
@@ -70,7 +70,7 @@ namespace OCA\Talk\Service { class BotService {
 			throw new \RuntimeException('private');
 		} return new class($u) {
 			public function __construct(
-				private string $uid
+				private string $uid,
 			) {
 			}public function getAttendee() {
 				return $this;
@@ -100,7 +100,7 @@ namespace {
 				private string $name,
 				private int $state,
 				private int $room,
-				public bool $app
+				public bool $app,
 			) {
 			}public function isEnabled() {
 				return $this->state !== 0 && $this->room !== 0;
@@ -109,7 +109,7 @@ namespace {
 			}public function getBotConversation() {
 				return new class($this->room) {
 					public function __construct(
-						private int $s
+						private int $s,
 					) {
 					}public function getState() {
 						return $this->s;
@@ -202,11 +202,11 @@ namespace {
 	$req->method = 'GET';
 	check($render('mentions', 200, '<ocs/>')[0] === '<ocs/>', 'XML unchanged');
 	$failed = str_replace('"status":"ok"', '"status":"failure"', $body);
-	check($render('mentions',200,$failed)[0] === $failed,'OCS failure unchanged');
+	check($render('mentions', 200, $failed)[0] === $failed, 'OCS failure unchanged');
 	$members->member = false;
-	check($render()[0] === $body,'nonparticipant failure closed preserving human response');
+	check($render()[0] === $body, 'nonparticipant failure closed preserving human response');
 	$members->member = true;
 	$req->params['limit'] = 'nope';
-	check($render()[0] === $body,'malformed limit unchanged');
+	check($render()[0] === $body, 'malformed limit unchanged');
 	echo "All checks passed.\n";
 }

@@ -23,7 +23,7 @@ class ApiController extends Controller {
 		IRequest $request,
 		private IUserSession $session,
 		private IURLGenerator $urls,
-		private IntegrationService $service
+		private IntegrationService $service,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -114,7 +114,7 @@ class ApiController extends Controller {
 				throw new ServiceException('JSON content type required.', 415);
 			}
 			$payload = array_intersect_key($this->request->getParams(), array_flip(['text','message','eventId']));
-			return $this->service->deliver($connectionId,$m[1],$payload);
+			return $this->service->deliver($connectionId, $m[1], $payload);
 		});
 	}
 }

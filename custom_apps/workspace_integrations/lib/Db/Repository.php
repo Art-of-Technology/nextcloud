@@ -9,7 +9,7 @@ use OCP\IDBConnection;
 /** Table names and column names are internal constants, never request input. */
 class Repository {
 	public function __construct(
-		private IDBConnection $db
+		private IDBConnection $db,
 	) {
 	}
 	public function ensureQuotaLock(): void {

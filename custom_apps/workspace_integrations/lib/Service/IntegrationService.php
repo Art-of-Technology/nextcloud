@@ -14,7 +14,7 @@ class IntegrationService {
 		private Repository $repository,
 		private TalkGateway $talk,
 		private IUserManager $users,
-		private IGroupManager $groups
+		private IGroupManager $groups,
 	) {
 	}
 	private function user(string $uid): void {

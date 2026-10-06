@@ -13,7 +13,7 @@ use OCP\Util;
 
 class PageListener implements IEventListener {
 	public function __construct(
-		private IUserSession $session
+		private IUserSession $session,
 	) {
 	}
 	public function handle(Event $event): void {

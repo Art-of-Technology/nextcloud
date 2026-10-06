@@ -7,7 +7,7 @@ namespace OCA\WorkspaceIntegrations\Service;
 final class ServiceException extends \RuntimeException {
 	public function __construct(
 		string $message,
-		public readonly int $status = 400
+		public readonly int $status = 400,
 	) {
 		parent::__construct($message);
 	}
