@@ -66,7 +66,7 @@
   }
   const list = el('div', undefined, 'wi-list');
   function fill() {
-   list.replaceChildren(); const matches = data.integrations.filter(i => (i.name + ' ' + i.description).toLowerCase().includes(query.toLowerCase()));
+   list.replaceChildren(); const matches = data.integrations.filter(i => (i.name + ' ' + (i.description ?? '')).toLowerCase().includes(query.toLowerCase()));
    if (!matches.length) { list.append(el('p', data.integrations.length ? 'No bots match your search.' : 'No bots yet in this view. Create a bot, then connect its first channel.', 'wi-empty')); return; }
    for (const item of matches) {
     const row = el('article', undefined, 'wi-list-row'), info = el('div');
