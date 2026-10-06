@@ -12,7 +12,7 @@ class IntegrationService {
 	public function __construct(private Repository $repository, private TalkGateway $talk, private IUserManager $users, private IGroupManager $groups) {}
 	private function user(string $uid): void {
 		$user = $this->users->get($uid);
-		if (!$user || !$user->isEnabled() || str_contains(strtolower((string)$user->getBackendClassName()), 'guest')) {
+		if (!AccountAccess::allowed($user)) {
 			throw new ServiceException('An enabled registered account is required.', 403);
 		}
 	}

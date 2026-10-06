@@ -12,7 +12,7 @@ class PageController extends Controller {
  #[NoCSRFRequired]
  public function index(): TemplateResponse|JSONResponse {
   $user=$this->session->getUser();
-  if ($user===null || !$user->isEnabled() || str_contains(strtolower($user->getBackendClassName()),'guest')) { return new JSONResponse(['error'=>'Access denied.'],403); }
+  if (!\OCA\WorkspaceIntegrations\Service\AccountAccess::allowed($user)) { return new JSONResponse(['error'=>'Access denied.'],403); }
   return new TemplateResponse('workspace_integrations','index',[],TemplateResponse::RENDER_AS_USER,200,['Cache-Control'=>'private, no-store']);
  }
 }

@@ -85,6 +85,16 @@ final class backendTest extends TestCase {
 		$this->talk->expects(self::never())->method('send');
 		$this->expectException(ServiceException::class); $this->service->create('guest','Audit');
 	}
+	public function testGuestBackendMatchingIsExactAcrossEntryPoints(): void {
+		$this->talk->expects(self::never())->method('send');
+		foreach (['Guests'=>false, 'OCA\\Guests\\UserBackend'=>false, 'GuestResearchDirectory'=>true, 'Database'=>true] as $backend => $expected) {
+			$user = $this->createStub(IUser::class);
+			$user->method('isEnabled')->willReturn(true);
+			$user->method('getBackendClassName')->willReturn($backend);
+			self::assertSame($expected, \OCA\WorkspaceIntegrations\Service\AccountAccess::allowed($user), $backend);
+		}
+		self::assertFalse(\OCA\WorkspaceIntegrations\Service\AccountAccess::allowed(null));
+	}
 	public function testSendUsesPinnedChannelAndDeduplicatesSameContent(): void {
 		$this->talk->expects(self::once())->method('send')->with(self::anything(),'roomtoken','Notice',self::stringStartsWith('wi-'))->willReturn('321');
 		self::assertSame(['status'=>'delivered','messageId'=>'321'],$this->service->deliver('connection',$this->credential,['text'=>'Notice','eventId'=>'source-1']));

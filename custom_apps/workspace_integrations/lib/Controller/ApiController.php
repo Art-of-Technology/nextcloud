@@ -20,7 +20,7 @@ class ApiController extends Controller {
  #[NoCSRFRequired]
  public function capabilities(): JSONResponse {
   $u=$this->session->getUser();
-  $ok=$u!==null && $u->isEnabled() && !str_contains(strtolower($u->getBackendClassName()),'guest');
+  $ok=\OCA\WorkspaceIntegrations\Service\AccountAccess::allowed($u);
   return new JSONResponse($ok ? ['enabled'=>true] : ['error'=>'Access denied.'],$ok ? 200 : 403,['Cache-Control'=>'private, no-store']);
  }
  #[NoAdminRequired]
