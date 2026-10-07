@@ -74,13 +74,20 @@ final class MessageNormalizer {
 			}
 			return ['text' => $text,'card' => null,'fingerprint' => hash('sha256', $text)];
 		}
+		$summary = $text;
 		$fallback = implode("\n\n", array_map(fn ($b) => $this->fallback($b), $blocks));
 		// Keep every field available to clients without the card renderer. A sender's
 		// summary must not erase the structured body from native-client fallback.
 		$text = $this->string($text !== null && $text !== $fallback && !str_starts_with($fallback, $text)
 		 ? $text . "\n\n" . $fallback : $fallback, 16000);
 		$card = ['schemaVersion' => 1,'blocks' => $blocks];
-		return ['text' => $text,'card' => $card,'fingerprint' => hash('sha256', json_encode($this->sort(['text' => $text,'card' => $card]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR))];
+		// Presentation must not change the persisted idempotency identity of retries.
+		$fingerprint = hash('sha256', json_encode($this->sort(['text' => $text,'card' => $card]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+		$presentation = implode("\n\n", array_map(fn ($b) => $this->fallback($b, true), $blocks));
+		if ($summary !== null && $summary !== $fallback && !str_starts_with($fallback, $summary)) {
+			$presentation = ($custom ? $summary : $this->markdownFallback($summary)) . "\n\n" . $presentation;
+		}
+		return ['text' => $this->string($presentation, 16000),'card' => $card,'fingerprint' => $fingerprint];
 	}
 	private function fail(string $message): never {
 		throw new ServiceException($message);
@@ -369,21 +376,29 @@ final class MessageNormalizer {
 		}
 		return $out;
 	}
-	private function fallback(array $node): string {
+	private function fallback(array $node, bool $presentation = false): string {
 		if (($node['type'] ?? '') === 'link') {
 			return ($node['text'] ?? $node['url']) . ' (' . $node['url'] . ')';
 		}
 		if (isset($node['text']) && is_string($node['text'])) {
+			if ($presentation && ($node['type'] ?? '') === 'mrkdwn') {
+				return $this->markdownFallback($node['text']);
+			}
+			if ($presentation && ($node['type'] ?? '') === 'plain_text' && ($node['emoji'] ?? true)) {
+				return $this->emojiFallback($node['text']);
+			}
 			return $node['text'];
 		}
 		if (($node['type'] ?? '') === 'emoji') {
-			return ':' . $node['name'] . ':';
+			return $presentation ? $this->emojiFallback(':' . $node['name'] . ':') : ':' . $node['name'] . ':';
 		}
 		if (($node['type'] ?? '') === 'image') {
 			return $node['alt_text'] . ' ' . $node['image_url'];
 		}
 		if (in_array($node['type'] ?? '', ['rich_text_section','rich_text_quote','rich_text_preformatted'], true)) {
-			return implode('', array_map(fn ($inline) => $this->fallback($inline), $node['elements']));
+			$preformatted = $node['type'] === 'rich_text_preformatted';
+			$content = implode('', array_map(fn ($inline) => $this->fallback($inline, $presentation && !$preformatted), $node['elements']));
+			return $presentation && $preformatted ? $this->codeFallback($content) : $content;
 		}
 		$parts = [];
 		foreach (['text','fields','elements','blocks','rows'] as $key) {
@@ -391,19 +406,60 @@ final class MessageNormalizer {
 				continue;
 			}$value = $node[$key];
 			if (isset($value['type'])) {
-				$parts[] = $this->fallback($value);
+				$parts[] = $this->fallback($value, $presentation);
 			} else {
 				foreach ($value as $child) {
 					if (isset($child['type'])) {
-						$parts[] = $this->fallback($child);
+						$parts[] = $this->fallback($child, $presentation);
 					} else {
 						foreach ($child as $cell) {
-							$parts[] = $this->fallback($cell);
+							$parts[] = $this->fallback($cell, $presentation);
 						}
 					}
 				}
 			}
 		}return implode("\n", $parts);
+	}
+	private function emojiFallback(string $text): string {
+		// Emoji-looking URL path/query values are data, including in plain text.
+		$parts = preg_split('~(<https?://[^>\r\n]+>|https?://[^\s<>`]+)~i', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+		foreach ($parts as $index => &$part) {
+			if ($index % 2 === 0) {
+				$part = strtr($part, [':moneybag:' => '💰', ':white_check_mark:' => '✅', ':warning:' => '⚠️', ':x:' => '❌', ':information_source:' => 'ℹ️', ':rocket:' => '🚀', ':tada:' => '🎉', ':bell:' => '🔔', ':eyes:' => '👀', ':thumbsup:' => '👍', ':+1:' => '👍', ':thumbsdown:' => '👎', ':-1:' => '👎']);
+			}
+		}
+		return implode('', $parts);
+	}
+	private function codeFallback(string $text): string {
+		// Choose a fence longer than any payload run so data cannot close it.
+		preg_match_all('/`+/', $text, $runs);
+		$length = 3;
+		foreach ($runs[0] as $run) {
+			$length = max($length, strlen($run) + 1);
+		}
+		$fence = str_repeat('`', $length);
+		json_decode($text);
+		$language = json_last_error() === JSON_ERROR_NONE && preg_match('/^\s*[\[{]/', $text) ? 'json' : '';
+		return $fence . $language . "\n" . $text . "\n" . $fence;
+	}
+	private function markdownFallback(string $text): string {
+		// Preserve code and URLs; Slack link labels stay literal with their target.
+		$parts = preg_split('~(`{3,}[\s\S]*?`{3,}|`[^`\n]*`|<https?://[^>\r\n]+>|https?://[^\s<>`]+)~i', $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+		foreach ($parts as $index => &$part) {
+			if ($index % 2 === 1) {
+				if (str_starts_with($part, '`') && !str_starts_with($part, '``')) {
+					$data = substr($part, 1, -1);
+					json_decode($data);
+					if (json_last_error() === JSON_ERROR_NONE && preg_match('/^\s*[\[{]/', $data)) {
+						$part = "\n" . $this->codeFallback($data) . "\n";
+					}
+				}
+				continue;
+			}
+			$part = $this->emojiFallback($part);
+			$part = preg_replace('/(?<![\\\\*\w])\*(?![\s*])([^*\n]*?\S)\*(?![\w*])/', '**$1**', $part);
+		}
+		return implode('', $parts);
 	}
 	private function sort(array $value): array {
 		if (!array_is_list($value)) {

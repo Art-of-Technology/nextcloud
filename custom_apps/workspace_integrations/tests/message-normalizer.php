@@ -33,11 +33,40 @@ $slack = ['text' => 'Audit summary','blocks' => [
 	['type' => 'context','elements' => [['type' => 'mrkdwn','text' => 'predicates: `{"eligible":true,"segmentIds":[1,2]}`']]],
 ]];
 $s = $n->normalize($slack);
+check($s['fingerprint'] === 'e5325f3df13957c30ebd96aa49524675d738a58ea2423364a8ff6afa50715200', 'pre-presentation Slack fingerprint preserved');
+check(str_contains($s['text'], '💰 **Audit result**') && str_contains($s['text'], '**Member:**'), 'Slack emoji and bold fallback');
+check(str_contains($s['text'], "```json\n{\"eligible\":true,\"segmentIds\":[1,2]}\n```"), 'JSON context fenced without changing values');
 check(count($s['card']['blocks']) === 3, 'Slack example');
 check(str_contains($s['text'], 'Audit summary') && str_contains($s['text'], '10.00 EUR') && str_contains($s['text'], 'predicates'), 'complete Slack notification fallback');
 $slack['blocks'][1]['fields'][1]['text'] = 'Changed';
 check($n->normalize($slack)['fingerprint'] !== $s['fingerprint'], 'layout covered by hash');
 $custom = $n->normalize(['title' => 'Audit result','status' => 'preview','fields' => [['label' => 'Member','value' => 'example-user']], 'context' => ['predicates' => ['eligible' => true]],'eventId' => 'event-2']);
+check($custom['fingerprint'] === '4452e34d2f3e23be8c9c5d13f187251d403a23fd01bd15e4a71b50f12da0ec87', 'pre-presentation custom fingerprint preserved');
+check(str_contains($custom['text'], '```json'), 'custom JSON uses fenced fallback');
+$literal = '`*literal* :moneybag:` and ```\n:moneybag: *literal*\n```';
+$literalResult = $n->normalize(['blocks' => [['type' => 'section','text' => ['type' => 'mrkdwn','text' => $literal]]]]);
+check($literalResult['text'] === $literal, 'code remains literal');
+$jsonLiteral = '{"literal":":moneybag: *word*","large":9223372036854775808}';
+$jsonResult = $n->normalize(['blocks' => [['type' => 'context','elements' => [['type' => 'mrkdwn','text' => 'predicates: `' . $jsonLiteral . '`']]]]]);
+check(str_contains($jsonResult['text'], "```json\n" . $jsonLiteral . "\n```"), 'JSON emoji, formatting and large integers preserved');
+$plainMarkup = ':moneybag: *literal*';
+check($n->normalize(['text' => $plainMarkup])['text'] === $plainMarkup, 'legacy text unchanged');
+check($n->normalize(['blocks' => [['type' => 'section','text' => ['type' => 'plain_text','text' => $plainMarkup,'emoji' => false]]]])['text'] === $plainMarkup, 'plain text emoji opt-out unchanged');
+check($n->normalize(['blocks' => [['type' => 'section','text' => ['type' => 'plain_text','text' => $plainMarkup]]]])['text'] === '💰 *literal*', 'plain text defaults to emoji without markdown conversion');
+check($n->normalize(['blocks' => [['type' => 'section','text' => ['type' => 'plain_text','text' => $plainMarkup,'emoji' => true]]]])['text'] === '💰 *literal*', 'plain text explicit emoji enabled');
+check($n->normalize(['blocks' => [['type' => 'table','rows' => [[['type' => 'raw_text','text' => $plainMarkup]]]]]])['text'] === $plainMarkup, 'raw table text unchanged');
+$unknown = ':unknown_custom_emoji: **already bold** *one*';
+check($n->normalize(['blocks' => [['type' => 'section','text' => ['type' => 'mrkdwn','text' => $unknown]]]])['text'] === ':unknown_custom_emoji: **already bold** **one**', 'unknown emoji and existing double stars preserved');
+reject(['blocks' => array_fill(0, 6, ['type' => 'section','text' => ['type' => 'mrkdwn','text' => str_repeat('*x* ', 650)]])], 'expanded presentation bound');
+$fenceData = 'literal ``` fence';
+$fenced = $n->normalize(['blocks' => [['type' => 'rich_text','elements' => [['type' => 'rich_text_preformatted','elements' => [['type' => 'text','text' => $fenceData]]]]]]]);
+check($fenced['text'] === "````\n" . $fenceData . "\n````", 'data cannot terminate a code fence');
+$urlMarkup = '<https://example.test/:moneybag:/*literal*|Receipt :moneybag:> https://example.test/:moneybag:/*literal*?flag=:warning: HTTPS://example.test/:moneybag: :moneybag: *Ready*';
+foreach (['mrkdwn','plain_text'] as $textType) {
+	$urlResult = $n->normalize(['blocks' => [['type' => 'section','text' => ['type' => $textType,'text' => $urlMarkup]]]]);
+	$expected = '<https://example.test/:moneybag:/*literal*|Receipt :moneybag:> https://example.test/:moneybag:/*literal*?flag=:warning: HTTPS://example.test/:moneybag: 💰 ' . ($textType === 'mrkdwn' ? '**Ready**' : '*Ready*');
+	check($urlResult['text'] === $expected, $textType . ' URL targets remain byte-exact while surrounding text formats');
+}
 check($custom['card']['blocks'][3]['elements'][0]['type'] === 'rich_text_preformatted', 'custom JSON');
 check(str_contains($custom['text'], 'eligible'), 'custom fallback');
 $rich = ['type' => 'rich_text','elements' => [

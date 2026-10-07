@@ -114,6 +114,13 @@ not currently collapsed on card-capable clients. Desktop requires a build that
 bundles the matching reference widget. Existing installed clients do not gain
 that renderer through a server deployment.
 
+Rich-message fallbacks translate common Slack emoji aliases and bold markup for
+Talk, leaving code contents unchanged. Valid inline JSON and preformatted data
+use fenced code blocks. Card JSON uses syntax colours with exact original copy
+contents. These presentation adjustments retain existing delivery fingerprints;
+retrying the same event after an upgrade does not create a new message. Existing
+posted fallback text is not rewritten. Text-only webhook messages are unchanged.
+
 Protocol references: [Slack section blocks](https://docs.slack.dev/reference/block-kit/blocks/section-block/)
 and [context blocks](https://docs.slack.dev/reference/block-kit/blocks/context-block/).
 The compatibility subset and bounds above are authoritative for this endpoint.
