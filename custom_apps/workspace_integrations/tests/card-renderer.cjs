@@ -62,6 +62,56 @@ app.whenReady().then(async () => {
 		assert(extra.querySelectorAll('details').length===1&&!extra.querySelector('img'),'non-JSON code remains normal; JSON HTML safe');
 		details.querySelector('button').click();await new Promise(resolve=>setTimeout(resolve,20));
 		assert(copied===json,'JSON copies original source');
+		const hostile={key:'<script>alert(1)</script><img src=x onerror=alert(1)>',escaped:'quotes " and slash \\u0022 :moneybag:',number:-123.45,exponent:1e30,yes:true,no:false,empty:null,list:[0,'false null 123',{}]};
+		const original='  '+JSON.stringify(hostile)+'  ';
+		const coloured=api.render({schemaVersion:1,blocks:[{type:'context',elements:[{type:'mrkdwn',text:bt+original+bt+' '+bt+'{"broken":true'+bt}]}]},{clipboard:{writeText:async text=>{copied=text}}});
+		document.body.appendChild(coloured);
+		const jsonNode=coloured.querySelector('.wnc-json-code');
+		assert(jsonNode.textContent===JSON.stringify(hostile,null,2),'highlighted JSON preserves all pretty text');
+		assert(!coloured.querySelector('script,img,[onerror]'),'hostile JSON creates no HTML or attributes');
+		assert(jsonNode.querySelector('.wnc-json-string').textContent===JSON.stringify(hostile.key),'hostile string is a literal token');
+		assert(jsonNode.textContent.includes(':moneybag:'),'JSON string emoji remains literal');
+		['key','string','number','boolean','null'].forEach(type=>assert(jsonNode.querySelector('.wnc-json-'+type),'JSON token '+type));
+		assert([...jsonNode.querySelectorAll('.wnc-json-boolean')].map(node=>node.textContent).join(',')==='true,false','booleans inside strings are not tokens');
+		assert(coloured.querySelectorAll('details').length===1&&coloured.querySelector('.wnc-inline-code').textContent==='{"broken":true','invalid JSON remains uncoloured inline code');
+		coloured.querySelector('.wnc-copy').click();await new Promise(resolve=>setTimeout(resolve,20));
+		assert(copied===original,'highlighting copies exact original including whitespace');
+		const slash=String.fromCharCode(92);
+		const lossless=' {"huge":900719925474099312345,"decimal":1.234567890123456789,"exponent":1.2300e+300,"negativeZero":-0,"escaped":"'+slash+'u003c'+slash+'u0022'+slash+'n","empty":[{},[]]} ';
+		const losslessCard=api.render({schemaVersion:1,blocks:[{type:'context',elements:[{type:'mrkdwn',text:bt+lossless+bt}]}]},{clipboard:{writeText:async text=>{copied=text}}});
+		const losslessCode=losslessCard.querySelector('code');
+		assert([...losslessCode.querySelectorAll('.wnc-json-number')].map(node=>node.textContent).join(',')==='900719925474099312345,1.234567890123456789,1.2300e+300,-0','pretty JSON preserves exact numeric lexemes');
+		assert(losslessCode.querySelector('.wnc-json-string').textContent==='"'+slash+'u003c'+slash+'u0022'+slash+'n"','pretty JSON preserves string escape lexemes');
+		assert(JSON.stringify(JSON.parse(losslessCode.textContent))===JSON.stringify(JSON.parse(lossless)),'lossless pretty display remains valid equivalent JSON');
+		assert(losslessCode.textContent.includes('{}')&&losslessCode.textContent.includes('[]'),'empty nested objects and arrays remain compact');
+		losslessCard.querySelector('.wnc-copy').click();await new Promise(resolve=>setTimeout(resolve,20));
+		assert(copied===lossless,'lossless pretty copies exact original source');
+		const exactJson=' {"event":900719925474099312345,"yes":true,"label":"<img src=x onerror=alert(1)>"} ';
+		const preformatted=api.render({schemaVersion:1,blocks:[
+			{type:'rich_text',elements:[{type:'rich_text_preformatted',elements:[{type:'text',text:exactJson}]}]},
+			{type:'section',text:{type:'mrkdwn',text:bt.repeat(3)+exactJson+bt.repeat(3)}},
+			{type:'rich_text',elements:[{type:'rich_text_preformatted',elements:[{type:'text',text:'echo true 123'}]}]}
+		]},{clipboard:{writeText:async text=>{copied=text}}});
+		document.body.appendChild(preformatted);
+		const highlighted=preformatted.querySelectorAll('.wnc-json-code');
+		assert(highlighted.length===2,'custom preformatted and fenced JSON highlighted');
+		for(const node of highlighted){
+			assert(node.textContent===exactJson,'preformatted JSON preserves whitespace and large integer precision');
+			assert(node.querySelector('.wnc-json-number').textContent==='900719925474099312345','large number token unchanged');
+			assert(node.closest('.wnc-json'),'preformatted JSON receives contrast palette');
+		}
+		assert(!preformatted.querySelector('img,[onerror]'),'preformatted hostile JSON remains literal');
+		assert(preformatted.querySelectorAll('code')[2].textContent==='echo true 123'&&!preformatted.querySelectorAll('code')[2].querySelector('span'),'ordinary preformatted code unchanged');
+		for(const button of [...preformatted.querySelectorAll('.wnc-copy')].slice(0,2)){
+			button.click();await new Promise(resolve=>setTimeout(resolve,20));assert(copied===exactJson,'preformatted JSON exact original copied');
+		}
+		function luminance(rgb){return rgb.match(/[\\d.]+/g).slice(0,3).map(Number).map(x=>{x/=255;return x<=0.04045?x/12.92:((x+0.055)/1.055)**2.4}).reduce((sum,x,i)=>sum+x*[0.2126,0.7152,0.0722][i],0)}
+		for(const theme of ['light','dark']){
+			document.documentElement.style.colorScheme=theme;
+			coloured.style.setProperty('--color-main-background',theme==='dark'?'#181818':'#ffffff');
+			const background=luminance(getComputedStyle(coloured.querySelector('pre')).backgroundColor);
+			[jsonNode,...jsonNode.querySelectorAll('span')].forEach(node=>{const foreground=luminance(getComputedStyle(node).color);assert((Math.max(background,foreground)+0.05)/(Math.min(background,foreground)+0.05)>=4.5,'JSON contrast '+theme)});
+		}
 		return count;
 	})()`);
 	await new Promise(resolve => setTimeout(resolve, 250));

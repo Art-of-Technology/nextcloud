@@ -35,11 +35,31 @@
 			a.referrerPolicy = 'no-referrer';
 			return a;
 		}
-		function code(text, copiedText) {
+		function jsonCode(text) {
+			var node = el('code', 'wnc-json-code');
+			// Called only after JSON.parse succeeds. Tokens remain literal text;
+			// punctuation and whitespace are preserved between highlighted spans.
+			var pattern = /"(?:\\.|[^"\\])*"|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\b(?:true|false|null)\b/g;
+			var offset = 0, match;
+			while ((match = pattern.exec(text))) {
+				node.appendChild(doc.createTextNode(text.slice(offset, match.index)));
+				var token = match[0];
+				var type = token.charAt(0) === '"' ? (/^\s*:/.test(text.slice(pattern.lastIndex)) ? 'key' : 'string')
+					: token === 'null' ? 'null' : token === 'true' || token === 'false' ? 'boolean' : 'number';
+				node.appendChild(el('span', 'wnc-json-' + type, token));
+				offset = pattern.lastIndex;
+			}
+			node.appendChild(doc.createTextNode(text.slice(offset)));
+			return node;
+		}
+		function code(text, copiedText, highlightJson) {
 			if (copiedText === undefined) copiedText = text;
-			var box = el('div', 'wnc-code');
+			if (!highlightJson) {
+				try { JSON.parse(text); highlightJson = true; } catch (_) { /* Ordinary code remains unchanged. */ }
+			}
+			var box = el('div', 'wnc-code' + (highlightJson ? ' wnc-json' : ''));
 			var pre = el('pre');
-			pre.appendChild(el('code', '', text));
+			pre.appendChild(highlightJson ? jsonCode(text) : el('code', '', text));
 			box.appendChild(pre);
 			var copy = el('button', 'wnc-copy', 'Copy code');
 			copy.type = 'button';
@@ -54,13 +74,35 @@
 			return box;
 		}
 		function decode(text) { return text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'); }
+		function prettyJson(text) {
+			// Validate, then format the source tokens rather than the parsed value:
+			// JSON.parse/stringify would round large integers and rewrite escapes.
+			JSON.parse(text);
+			var tokens = text.match(/"(?:\\.|[^"\\])*"|[{}\[\],:]|[^\s{}\[\],:]+/g);
+			var output = '', depth = 0;
+			function newline() { return '\n' + '  '.repeat(depth); }
+			tokens.forEach(function (token, index) {
+				if (token === '{' || token === '[') {
+					output += token;
+					depth++;
+					if (tokens[index + 1] !== '}' && tokens[index + 1] !== ']') output += newline();
+				} else if (token === '}' || token === ']') {
+					depth--;
+					if (tokens[index - 1] !== '{' && tokens[index - 1] !== '[') output += newline();
+					output += token;
+				} else if (token === ',') output += ',' + newline();
+				else if (token === ':') output += ': ';
+				else output += token;
+			});
+			return output;
+		}
 		function inlineCode(text, expandJson) {
 			if (expandJson) {
 				try {
-					var pretty = JSON.stringify(JSON.parse(text), null, 2);
+					var pretty = prettyJson(text);
 					var details = el('details', 'wnc-json');
 					details.appendChild(el('summary', '', 'JSON details'));
-					details.appendChild(code(pretty, text));
+					details.appendChild(code(pretty, text, true));
 					return details;
 				} catch (_) { /* Non-JSON inline code keeps its normal presentation. */ }
 			}
